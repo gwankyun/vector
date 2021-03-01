@@ -52,3 +52,22 @@ TEST_CASE("resize", "lite::vector")
     vec.resize(5, '0');
     REQUIRE(memcmp(vec.data(), "12300", vec.size()) == 0);
 }
+
+TEST_CASE("front & back", "lite::vector")
+{
+    lite::vector<int> vec;
+    vec.push_back(1);
+    vec.push_back(2);
+    vec.push_back(3);
+    REQUIRE(vec.front() == 1);
+    REQUIRE(vec.back() == 3);
+}
+
+TEST_CASE("[]", "lite::vector")
+{
+    lite::vector<int> vec;
+    vec.push_back(1);
+    vec.push_back(2);
+    vec.push_back(3);
+    REQUIRE(vec[1] == 2);
+}

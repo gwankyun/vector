@@ -2,14 +2,31 @@
 #include <cstddef> // std::size_t std::ptrdiff_t
 #include <stdexcept> // std::out_of_range
 #include <algorithm> // std::fill std::copy
+#include <cassert> // std::assert
 
 #ifndef LITE_NOEXCEPT
 #  define LITE_NOEXCEPT
 #endif // !LITE_NOEXCEPT
 
 #ifndef LITE_CONSTEXPR
-#  define LITE_CONSTEXPR
+#  if defined(__cpp_constexpr)
+#    define LITE_CONSTEXPR constexpr
+#  else
+#    define LITE_CONSTEXPR inline
+#  endif // defined(__cpp_constexpr)
 #endif // !LITE_CONSTEXPR
+
+#ifndef LITE_NULLPTR
+#  define LITE_NULLPTR NULL
+#endif // !LITE_NULLPTR
+
+#ifndef LITE_CONSTEXPR_DYNAMIC_ALLOC
+#  if defined(__cpp_constexpr_dynamic_alloc)
+#    define LITE_CONSTEXPR_DYNAMIC_ALLOC constexpr
+#  else
+#    define LITE_CONSTEXPR_DYNAMIC_ALLOC inline
+#  endif // defined(__cpp_constexpr_dynamic_alloc)
+#endif // !LITE_CONSTEXPR_DYNAMIC_ALLOC
 
 namespace lite
 {
@@ -36,7 +53,7 @@ namespace lite
         typedef const value_type* const_reverse_iterator;
 
         LITE_CONSTEXPR vector() LITE_NOEXCEPT
-            : m_data(NULL)
+            : m_data(LITE_NULLPTR)
             , m_size(0)
             , m_capacity(0)
         {
@@ -57,7 +74,7 @@ namespace lite
             std::fill_n(m_data, count, value);
         }
 
-        LITE_CONSTEXPR ~vector()
+        LITE_CONSTEXPR_DYNAMIC_ALLOC ~vector()
         {
             clear();
         }
@@ -66,11 +83,17 @@ namespace lite
 
         LITE_CONSTEXPR reference operator[](size_type pos)
         {
+#if _DEBUG
+            assert(pos < m_size);
+#endif // _DEBUG
             return m_data[pos];
         }
 
         LITE_CONSTEXPR const_reference operator[](size_type pos) const
         {
+#if _DEBUG
+            assert(pos < m_size);
+#endif // _DEBUG
             return m_data[pos];
         }
 
@@ -223,7 +246,7 @@ namespace lite
 
         LITE_CONSTEXPR void clear() LITE_NOEXCEPT
         {
-            if (m_data != NULL)
+            if (m_data != LITE_NULLPTR)
             {
                 _clear();
                 m_size = 0UL;
@@ -255,6 +278,9 @@ namespace lite
 
         LITE_CONSTEXPR void pop_back()
         {
+#if _DEBUG
+            assert(!empty());
+#endif // _DEBUG
             m_size--;
         }
 
@@ -293,7 +319,7 @@ namespace lite
         LITE_CONSTEXPR void _clear() LITE_NOEXCEPT
         {
             delete[] m_data;
-            m_data = NULL;
+            m_data = LITE_NULLPTR;
         }
 
         LITE_CONSTEXPR void _reserve(size_type new_cap)
