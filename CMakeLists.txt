@@ -26,6 +26,8 @@ target_sources(${vector}
     include/lite/vector.hpp
 )
 
+target_include_directories(${vector} PRIVATE include)
+
 target_compile_features(${vector} PRIVATE cxx_std_17)
 
 # 如果找到Catch2就添加測試

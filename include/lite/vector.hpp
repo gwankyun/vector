@@ -3,6 +3,14 @@
 #include <stdexcept> // std::out_of_range
 #include <algorithm> // std::fill std::copy
 #include <cassert> // std::assert
+#include <iterator> // iterator_traits
+#include <climits> //
+ 
+#ifndef ULLONG_MAX
+#  if _UI64_MAX
+#    define ULLONG_MAX _UI64_MAX
+#  endif // _UI64_MAX
+#endif // !ULLONG_MAX
 
 #ifndef LITE_NOEXCEPT
 #  define LITE_NOEXCEPT
@@ -101,7 +109,7 @@ namespace lite
         {
             if (pos >= m_size)
             {
-                throw std::out_of_range;
+                throw std::out_of_range("out_of_range");
             }
             return m_data[pos];
         }
@@ -110,28 +118,40 @@ namespace lite
         {
             if (pos >= m_size)
             {
-                throw std::out_of_range;
+                throw std::out_of_range("out_of_range");
             }
             return m_data[pos];
         }
 
         LITE_CONSTEXPR reference front()
         {
+#if _DEBUG
+            assert(!empty());
+#endif // _DEBUG
             return m_data[0];
         }
 
         LITE_CONSTEXPR const_reference front() const
         {
+#if _DEBUG
+            assert(!empty());
+#endif // _DEBUG
             return m_data[0];
         }
 
         LITE_CONSTEXPR reference back()
         {
+#if _DEBUG
+            assert(!empty());
+#endif // _DEBUG
             return m_data[m_size - 1];
         }
 
         LITE_CONSTEXPR const_reference back() const
         {
+#if _DEBUG
+            assert(!empty());
+#endif // _DEBUG
             return m_data[m_size - 1];
         }
 
@@ -219,6 +239,11 @@ namespace lite
             return m_size;
         }
 
+        LITE_CONSTEXPR size_type max_size() const LITE_NOEXCEPT
+        {
+            return UULONG_MAX;
+        }
+
         LITE_CONSTEXPR void reserve(size_type new_cap)
         {
             if (new_cap <= m_capacity)
@@ -254,13 +279,41 @@ namespace lite
             }
         }
 
-        //LITE_CONSTEXPR iterator insert(const_iterator pos, const T& value)
-        //{
-        //    if (m_capacity == m_size)
-        //    {
-        //        _reserve(m_size * 2);
-        //    }
-        //}
+        LITE_CONSTEXPR iterator insert(const_iterator pos, const T& value) // 1
+        {
+            return insert(pos, 1, value);
+        }
+
+        LITE_CONSTEXPR iterator insert(const_iterator pos, size_type count, const T& value) // 3
+        {
+            difference_type offset = pos - begin();
+            for (size_type i = 0U; i < count; i++)
+            {
+                push_back(value);
+            }
+            std::rotate(begin() + offset, end() - count, end());
+            return begin() + offset;
+        }
+
+        LITE_CONSTEXPR iterator erase(const_iterator pos) //1
+        {
+            return erase(pos, pos + 1);
+        }
+
+        LITE_CONSTEXPR iterator erase(const_iterator first, const_iterator last) //2
+        {
+#if _DEBUG
+            assert(begin() <= first && first < end());
+#endif // _DEBUG
+            difference_type fst = first - begin();
+            difference_type lst = last - begin();
+            std::rotate(begin() + fst, begin() + lst, end());
+            for (difference_type i = 0U; i < lst - fst; i++)
+            {
+                pop_back();
+            }
+            return begin() + fst;
+        }
 
         LITE_CONSTEXPR void push_back(const T& value)
         {
@@ -291,31 +344,42 @@ namespace lite
                 m_size = count;
                 return;
             }
-            T* newData = new T[count];
-            copy_n(m_data, m_size, newData);
-            _clear();
-            m_data = newData;
+
+            _reserve(count);
             m_size = count;
-            m_capacity = count;
         }
 
         LITE_CONSTEXPR void resize(size_type count, const value_type& value)
         {
             if (m_size >= count)
             {
+                std::fill_n(m_data + m_size, count - m_size, value);
                 m_size = count;
                 return;
             }
-            T* newData = new T[count];
-            copy_n(m_data, m_size, newData);
-            std::fill_n(newData + m_size, count - m_size, value);
-            _clear();
-            m_data = newData;
+
+            _reserve(count);
+            std::fill_n(m_data + m_size, count - m_size, value);
             m_size = count;
-            m_capacity = count;
+        }
+
+        LITE_CONSTEXPR void swap(vector& other) LITE_NOEXCEPT
+        {
+            vector<T> temp;
+            temp._set(*this);
+            _set(other);
+            other._set(temp);
         }
 
     private:
+        LITE_CONSTEXPR void _set(vector& other) LITE_NOEXCEPT
+        {
+            m_data = other.m_data;
+            m_size = other.m_size;
+            m_capacity = other.m_capacity;
+            other.m_data = LITE_NULLPTR;
+        }
+
         LITE_CONSTEXPR void _clear() LITE_NOEXCEPT
         {
             delete[] m_data;
@@ -329,16 +393,6 @@ namespace lite
             _clear();
             m_data = newData;
             m_capacity = new_cap;
-        }
-
-        LITE_CONSTEXPR void _resize(size_type count)
-        {
-            T* newData = new T[count];
-            copy_n(m_data, m_size, newData);
-            _clear();
-            m_data = newData;
-            m_size = count;
-            m_capacity = count;
         }
 
         T* m_data;
