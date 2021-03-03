@@ -4,6 +4,7 @@
 #include <algorithm> // std::fill std::copy
 #include <cassert> // std::assert
 #include <iterator> // iterator_traits
+#include <utility> // std::move
 #include <climits> //
  
 #ifndef ULLONG_MAX
@@ -60,21 +61,21 @@ namespace lite
         typedef value_type* reverse_iterator;
         typedef const value_type* const_reverse_iterator;
 
-        LITE_CONSTEXPR vector() LITE_NOEXCEPT
+        LITE_CONSTEXPR vector() LITE_NOEXCEPT // 1
             : m_data(LITE_NULLPTR)
             , m_size(0)
             , m_capacity(0)
         {
         }
 
-        LITE_CONSTEXPR explicit vector(size_type count)
+        LITE_CONSTEXPR explicit vector(size_type count) // 4
             : m_data(new T[count])
             , m_size(count)
             , m_capacity(count)
         {
         }
 
-        LITE_CONSTEXPR vector(size_type count, const T& value)
+        LITE_CONSTEXPR vector(size_type count, const T& value) // 3
             : m_data(new T[count])
             , m_size(count)
             , m_capacity(count)
@@ -315,19 +316,21 @@ namespace lite
             return begin() + fst;
         }
 
-        LITE_CONSTEXPR void push_back(const T& value)
+        LITE_CONSTEXPR void push_back(const T& value) // 1
         {
-            if (empty())
-            {
-                _reserve(1);
-            }
-            else if (m_capacity == m_size)
-            {
-                _reserve(m_size * 2);
-            }
+            _push_back();
             m_data[m_size] = value;
             m_size++;
         }
+
+#if defined(__cpp_rvalue_references)
+        LITE_CONSTEXPR void push_back(T&& value) // 2
+        {
+            _push_back();
+            m_data[m_size] = std::move(value);
+            m_size++;
+        }
+#endif // defined(__cpp_rvalue_references)
 
         LITE_CONSTEXPR void pop_back()
         {
@@ -395,8 +398,26 @@ namespace lite
             m_capacity = new_cap;
         }
 
+        LITE_CONSTEXPR void _push_back()
+        {
+            if (empty())
+            {
+                _reserve(1);
+            }
+            else if (m_capacity == m_size)
+            {
+                _reserve(m_size * 2);
+            }
+        }
+
         T* m_data;
         size_type m_size;
         size_type m_capacity;
     };
+
+    template<typename T>
+    LITE_CONSTEXPR void swap(vector<T>& lhs, vector<T>& rhs) LITE_NOEXCEPT
+    {
+        lhs.swap(rhs);
+    }
 }

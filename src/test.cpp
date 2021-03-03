@@ -168,4 +168,7 @@ TEST_CASE("swap", "lite::vector")
     vec1.swap(vec2);
     REQUIRE(memcmp(vec1.data(), "456", vec1.size()) == 0);
     REQUIRE(memcmp(vec2.data(), "123", vec2.size()) == 0);
+    lite::swap(vec1, vec2);
+    REQUIRE(memcmp(vec1.data(), "123", vec1.size()) == 0);
+    REQUIRE(memcmp(vec2.data(), "456", vec2.size()) == 0);
 }
