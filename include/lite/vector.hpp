@@ -332,6 +332,15 @@ namespace lite
         }
 #endif // defined(__cpp_rvalue_references)
 
+#if defined(__cpp_rvalue_references)
+        template<typename... Args>
+        LITE_CONSTEXPR reference emplace_back(Args&&... args)
+        {
+            push_back(T(std::forward<Args>(args)...));
+            return back();
+        }
+#endif // defined(__cpp_rvalue_references)
+
         LITE_CONSTEXPR void pop_back()
         {
 #if _DEBUG

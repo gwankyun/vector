@@ -1,7 +1,7 @@
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
-#include <lite/vector.hpp>
-#include <cstring> // memcmp
+#include <lite/vector.hpp> // std::fill_n
+#include <cstring> // std::memcmp
 #include <algorithm>
 
 TEST_CASE("push_back", "lite::vector")
@@ -41,7 +41,7 @@ TEST_CASE("data", "lite::vector")
     vec.push_back('1');
     vec.push_back('2');
     vec.push_back('3');
-    REQUIRE(memcmp(vec.data(), "123", vec.size()) == 0);
+    REQUIRE(std::memcmp(vec.data(), "123", vec.size()) == 0);
 }
 
 TEST_CASE("resize", "lite::vector")
@@ -51,7 +51,7 @@ TEST_CASE("resize", "lite::vector")
     vec.push_back('2');
     vec.push_back('3');
     vec.resize(5, '0');
-    REQUIRE(memcmp(vec.data(), "12300", vec.size()) == 0);
+    REQUIRE(std::memcmp(vec.data(), "12300", vec.size()) == 0);
 }
 
 TEST_CASE("reserve", "lite::vector")
@@ -121,11 +121,11 @@ TEST_CASE("insert", "lite::vector")
     auto iter = vec.begin();
     iter++;
     vec.insert(iter, '0');
-    REQUIRE(memcmp(vec.data(), "1023", vec.size()) == 0);
+    REQUIRE(std::memcmp(vec.data(), "1023", vec.size()) == 0);
     iter = vec.begin();
     iter++;
     vec.insert(iter, 2, '4');
-    REQUIRE(memcmp(vec.data(), "144023", vec.size()) == 0);
+    REQUIRE(std::memcmp(vec.data(), "144023", vec.size()) == 0);
 }
 
 TEST_CASE("erase", "lite::vector")
@@ -137,13 +137,13 @@ TEST_CASE("erase", "lite::vector")
     auto iter = vec.begin();
     iter++;
     vec.erase(iter);
-    REQUIRE(memcmp(vec.data(), "13", vec.size()) == 0);
+    REQUIRE(std::memcmp(vec.data(), "13", vec.size()) == 0);
     vec.push_back('4');
     vec.push_back('5');
     iter = vec.begin();
     auto lst = iter + 2;
     vec.erase(iter, lst);
-    REQUIRE(memcmp(vec.data(), "45", vec.size()) == 0);
+    REQUIRE(std::memcmp(vec.data(), "45", vec.size()) == 0);
     REQUIRE(vec.erase(vec.begin() + vec.size() - 1) == vec.end());
 }
 
@@ -152,7 +152,7 @@ TEST_CASE("fill_n", "lite::vector")
     lite::vector<char> vec;
     vec.resize(3, 'a');
     std::fill_n(vec.begin(), vec.size(), 'c');
-    REQUIRE(memcmp(vec.data(), "ccc", vec.size()) == 0);
+    REQUIRE(std::memcmp(vec.data(), "ccc", vec.size()) == 0);
 }
 
 TEST_CASE("swap", "lite::vector")
@@ -166,9 +166,9 @@ TEST_CASE("swap", "lite::vector")
     vec2.push_back('5');
     vec2.push_back('6');
     vec1.swap(vec2);
-    REQUIRE(memcmp(vec1.data(), "456", vec1.size()) == 0);
-    REQUIRE(memcmp(vec2.data(), "123", vec2.size()) == 0);
+    REQUIRE(std::memcmp(vec1.data(), "456", vec1.size()) == 0);
+    REQUIRE(std::memcmp(vec2.data(), "123", vec2.size()) == 0);
     lite::swap(vec1, vec2);
-    REQUIRE(memcmp(vec1.data(), "123", vec1.size()) == 0);
-    REQUIRE(memcmp(vec2.data(), "456", vec2.size()) == 0);
+    REQUIRE(std::memcmp(vec1.data(), "123", vec1.size()) == 0);
+    REQUIRE(std::memcmp(vec2.data(), "456", vec2.size()) == 0);
 }
