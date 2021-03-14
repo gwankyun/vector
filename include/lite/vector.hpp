@@ -69,14 +69,14 @@ namespace lite
         }
 
         LITE_CONSTEXPR explicit vector(size_type count) // 4
-            : m_data(new T[count])
+            : m_data(_create(count))
             , m_size(count)
             , m_capacity(count)
         {
         }
 
         LITE_CONSTEXPR vector(size_type count, const T& value) // 3
-            : m_data(new T[count])
+            : m_data(_create(count))
             , m_size(count)
             , m_capacity(count)
         {
@@ -384,6 +384,18 @@ namespace lite
         }
 
     private:
+        T* _create(size_type count)
+        {
+            return new T[count];
+            //return (T*)malloc(count * sizeof(size_type));
+        }
+
+        void _destory(T* data)
+        {
+            delete[] data;
+            //free(data);
+        }
+
         LITE_CONSTEXPR void _set(vector& other) LITE_NOEXCEPT
         {
             m_data = other.m_data;
@@ -394,13 +406,17 @@ namespace lite
 
         LITE_CONSTEXPR void _clear() LITE_NOEXCEPT
         {
-            delete[] m_data;
+            //delete[] m_data;
+            //free(m_data);
+            _destory(m_data);
             m_data = LITE_NULLPTR;
         }
 
         LITE_CONSTEXPR void _reserve(size_type new_cap)
         {
-            T* newData = new T[new_cap];
+            //T* newData = new T[new_cap];
+            //T* newData = (T*)malloc(new_cap * sizeof(T));
+            T* newData = _create(new_cap);
             copy_n(m_data, m_size, newData);
             _clear();
             m_data = newData;
