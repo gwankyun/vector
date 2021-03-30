@@ -65,5 +65,13 @@ int main()
     new (i) int(99);
     delete[] i;
 
+    lite::vector<Object> v;
+    v.emplace_back(999);
+
+    {
+        std::vector<Object> v;
+        v.emplace_back(888);
+    }
+
     return 0;
 }

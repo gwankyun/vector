@@ -6,41 +6,69 @@
 #include <iterator> // iterator_traits
 #include <utility> // std::move
 #include <climits> //
- 
+
+#ifndef HAS_CXX_11
+#  if __cplusplus >= 201103L
+#    define HAS_CXX_11 1
+#  else
+#    define HAS_CXX_11 0
+#  endif // __cplusplus >= 201103L
+#endif // !HAS_CXX_11
+
+#ifndef HAS_TYPE_TRAITS
+#  if HAS_CXX_11 || defined(HAS_BOOST)
+#    define HAS_TYPE_TRAITS 1
+#  else
+#    define HAS_TYPE_TRAITS 0
+#  endif // HAS_CXX_11
+#endif // !HAS_TYPE_TRAITS
+    
+#if !defined(ENABLE_IF)
+#  if HAS_CXX_11
+#    include <type_traits>
+#    define ENABLE_IF std::enable_if
+#    define IS_CLASS std::is_class
+#  elif defined(HAS_BOOST)
+#    include <boost/type_traits.hpp>
+#    define ENABLE_IF boost::enable_if
+#    define IS_CLASS boost::is_class
+#  endif // HAS_CXX_11
+#endif
+
 #ifndef ULLONG_MAX
 #  if _UI64_MAX
 #    define ULLONG_MAX _UI64_MAX
 #  endif // _UI64_MAX
 #endif // !ULLONG_MAX
 
-#ifndef LITE_NOEXCEPT
-#  define LITE_NOEXCEPT
-#endif // !LITE_NOEXCEPT
+#ifndef NOEXCEPT
+#  define NOEXCEPT
+#endif // !NOEXCEPT
 
-#ifndef LITE_CONSTEXPR
+#ifndef CONSTEXPR
 #  if defined(__cpp_constexpr)
-#    define LITE_CONSTEXPR constexpr
+#    define CONSTEXPR constexpr
 #  else
-#    define LITE_CONSTEXPR inline
+#    define CONSTEXPR inline
 #  endif // defined(__cpp_constexpr)
-#endif // !LITE_CONSTEXPR
+#endif // !CONSTEXPR
 
-#ifndef LITE_NULLPTR
-#  define LITE_NULLPTR NULL
-#endif // !LITE_NULLPTR
+#ifndef NULLPTR
+#  define NULLPTR NULL
+#endif // !NULLPTR
 
-#ifndef LITE_CONSTEXPR_DYNAMIC_ALLOC
+#ifndef CONSTEXPR_DYNAMIC_ALLOC
 #  if defined(__cpp_constexpr_dynamic_alloc)
-#    define LITE_CONSTEXPR_DYNAMIC_ALLOC constexpr
+#    define CONSTEXPR_DYNAMIC_ALLOC constexpr
 #  else
-#    define LITE_CONSTEXPR_DYNAMIC_ALLOC inline
+#    define CONSTEXPR_DYNAMIC_ALLOC inline
 #  endif // defined(__cpp_constexpr_dynamic_alloc)
-#endif // !LITE_CONSTEXPR_DYNAMIC_ALLOC
+#endif // !CONSTEXPR_DYNAMIC_ALLOC
 
 namespace lite
 {
     template<typename InputIt, typename Size, typename OutputIt>
-    LITE_CONSTEXPR OutputIt copy_n(InputIt first, Size count, OutputIt result)
+    CONSTEXPR OutputIt copy_n(InputIt first, Size count, OutputIt result)
     {
         return std::copy(first, first + count, result);
     }
@@ -61,21 +89,21 @@ namespace lite
         typedef value_type* reverse_iterator;
         typedef const value_type* const_reverse_iterator;
 
-        LITE_CONSTEXPR vector() LITE_NOEXCEPT // 1
-            : m_data(LITE_NULLPTR)
+        CONSTEXPR vector() NOEXCEPT // 1
+            : m_data(NULLPTR)
             , m_size(0)
             , m_capacity(0)
         {
         }
 
-        LITE_CONSTEXPR explicit vector(size_type count) // 4
+        CONSTEXPR explicit vector(size_type count) // 4
             : m_data(_create(count))
             , m_size(count)
             , m_capacity(count)
         {
         }
 
-        LITE_CONSTEXPR vector(size_type count, const T& value) // 3
+        CONSTEXPR vector(size_type count, const T& value) // 3
             : m_data(_create(count))
             , m_size(count)
             , m_capacity(count)
@@ -83,14 +111,14 @@ namespace lite
             std::fill_n(m_data, count, value);
         }
 
-        LITE_CONSTEXPR_DYNAMIC_ALLOC ~vector()
+        CONSTEXPR_DYNAMIC_ALLOC ~vector()
         {
             clear();
         }
 
         // 元素訪問
 
-        LITE_CONSTEXPR reference operator[](size_type pos)
+        CONSTEXPR reference operator[](size_type pos)
         {
 #if _DEBUG
             assert(pos < m_size);
@@ -98,7 +126,7 @@ namespace lite
             return m_data[pos];
         }
 
-        LITE_CONSTEXPR const_reference operator[](size_type pos) const
+        CONSTEXPR const_reference operator[](size_type pos) const
         {
 #if _DEBUG
             assert(pos < m_size);
@@ -106,7 +134,7 @@ namespace lite
             return m_data[pos];
         }
 
-        LITE_CONSTEXPR reference at(size_type pos)
+        CONSTEXPR reference at(size_type pos)
         {
             if (pos >= m_size)
             {
@@ -115,7 +143,7 @@ namespace lite
             return m_data[pos];
         }
 
-        LITE_CONSTEXPR const_reference at(size_type pos) const
+        CONSTEXPR const_reference at(size_type pos) const
         {
             if (pos >= m_size)
             {
@@ -124,7 +152,7 @@ namespace lite
             return m_data[pos];
         }
 
-        LITE_CONSTEXPR reference front()
+        CONSTEXPR reference front()
         {
 #if _DEBUG
             assert(!empty());
@@ -132,7 +160,7 @@ namespace lite
             return m_data[0];
         }
 
-        LITE_CONSTEXPR const_reference front() const
+        CONSTEXPR const_reference front() const
         {
 #if _DEBUG
             assert(!empty());
@@ -140,7 +168,7 @@ namespace lite
             return m_data[0];
         }
 
-        LITE_CONSTEXPR reference back()
+        CONSTEXPR reference back()
         {
 #if _DEBUG
             assert(!empty());
@@ -148,7 +176,7 @@ namespace lite
             return m_data[m_size - 1];
         }
 
-        LITE_CONSTEXPR const_reference back() const
+        CONSTEXPR const_reference back() const
         {
 #if _DEBUG
             assert(!empty());
@@ -156,96 +184,96 @@ namespace lite
             return m_data[m_size - 1];
         }
 
-        LITE_CONSTEXPR T* data() LITE_NOEXCEPT
+        CONSTEXPR T* data() NOEXCEPT
         {
             return m_data;
         }
 
-        LITE_CONSTEXPR const T* data() const LITE_NOEXCEPT
+        CONSTEXPR const T* data() const NOEXCEPT
         {
             return m_data;
         }
 
         // 迭代器
 
-        LITE_CONSTEXPR iterator begin() LITE_NOEXCEPT
+        CONSTEXPR iterator begin() NOEXCEPT
         {
             return &front();
         }
 
-        LITE_CONSTEXPR const_iterator begin() const LITE_NOEXCEPT
+        CONSTEXPR const_iterator begin() const NOEXCEPT
         {
             return &front();
         }
 
-        LITE_CONSTEXPR const_iterator cbegin() const LITE_NOEXCEPT
+        CONSTEXPR const_iterator cbegin() const NOEXCEPT
         {
             return &front();
         }
 
-        LITE_CONSTEXPR iterator end() LITE_NOEXCEPT
+        CONSTEXPR iterator end() NOEXCEPT
         {
             return &back() + 1;
         }
 
-        LITE_CONSTEXPR const_iterator end() const LITE_NOEXCEPT
+        CONSTEXPR const_iterator end() const NOEXCEPT
         {
             return &back() + 1;
         }
 
-        LITE_CONSTEXPR const_iterator cend() const LITE_NOEXCEPT
+        CONSTEXPR const_iterator cend() const NOEXCEPT
         {
             return &back() + 1;
         }
 
-        LITE_CONSTEXPR reverse_iterator rbegin() LITE_NOEXCEPT
+        CONSTEXPR reverse_iterator rbegin() NOEXCEPT
         {
             return &back();
         }
 
-        LITE_CONSTEXPR const_reverse_iterator rbegin() const LITE_NOEXCEPT
+        CONSTEXPR const_reverse_iterator rbegin() const NOEXCEPT
         {
             return &back();
         }
 
-        LITE_CONSTEXPR const_reverse_iterator crbegin() const LITE_NOEXCEPT
+        CONSTEXPR const_reverse_iterator crbegin() const NOEXCEPT
         {
             return &back();
         }
 
-        LITE_CONSTEXPR reverse_iterator rend() LITE_NOEXCEPT
+        CONSTEXPR reverse_iterator rend() NOEXCEPT
         {
             return &front() - 1;
         }
 
-        LITE_CONSTEXPR const_reverse_iterator rend() const LITE_NOEXCEPT
+        CONSTEXPR const_reverse_iterator rend() const NOEXCEPT
         {
             return &front() - 1;
         }
 
-        LITE_CONSTEXPR const_reverse_iterator crend() const LITE_NOEXCEPT
+        CONSTEXPR const_reverse_iterator crend() const NOEXCEPT
         {
             return &front() - 1;
         }
 
         // 容量
 
-        LITE_CONSTEXPR bool empty() const LITE_NOEXCEPT
+        CONSTEXPR bool empty() const NOEXCEPT
         {
             return m_size == 0UL;
         }
 
-        LITE_CONSTEXPR size_type size() const LITE_NOEXCEPT
+        CONSTEXPR size_type size() const NOEXCEPT
         {
             return m_size;
         }
 
-        LITE_CONSTEXPR size_type max_size() const LITE_NOEXCEPT
+        CONSTEXPR size_type max_size() const NOEXCEPT
         {
             return UULONG_MAX;
         }
 
-        LITE_CONSTEXPR void reserve(size_type new_cap)
+        CONSTEXPR void reserve(size_type new_cap)
         {
             if (new_cap <= m_capacity)
             {
@@ -254,12 +282,12 @@ namespace lite
             _reserve(new_cap);
         }
 
-        LITE_CONSTEXPR size_type capacity() const LITE_NOEXCEPT
+        CONSTEXPR size_type capacity() const NOEXCEPT
         {
             return m_capacity;
         }
 
-        LITE_CONSTEXPR void shrink_to_fit()
+        CONSTEXPR void shrink_to_fit()
         {
             if (m_size == m_capacity)
             {
@@ -270,9 +298,9 @@ namespace lite
 
         // 修改器
 
-        LITE_CONSTEXPR void clear() LITE_NOEXCEPT
+        CONSTEXPR void clear() NOEXCEPT
         {
-            if (m_data != LITE_NULLPTR)
+            if (m_data != NULLPTR)
             {
                 _clear();
                 m_size = 0UL;
@@ -280,12 +308,12 @@ namespace lite
             }
         }
 
-        LITE_CONSTEXPR iterator insert(const_iterator pos, const T& value) // 1
+        CONSTEXPR iterator insert(const_iterator pos, const T& value) // 1
         {
             return insert(pos, 1, value);
         }
 
-        LITE_CONSTEXPR iterator insert(const_iterator pos, size_type count, const T& value) // 3
+        CONSTEXPR iterator insert(const_iterator pos, size_type count, const T& value) // 3
         {
             difference_type offset = pos - begin();
             for (size_type i = 0U; i < count; i++)
@@ -296,12 +324,12 @@ namespace lite
             return begin() + offset;
         }
 
-        LITE_CONSTEXPR iterator erase(const_iterator pos) //1
+        CONSTEXPR iterator erase(const_iterator pos) //1
         {
             return erase(pos, pos + 1);
         }
 
-        LITE_CONSTEXPR iterator erase(const_iterator first, const_iterator last) //2
+        CONSTEXPR iterator erase(const_iterator first, const_iterator last) //2
         {
 #if _DEBUG
             assert(begin() <= first && first < end());
@@ -316,7 +344,7 @@ namespace lite
             return begin() + fst;
         }
 
-        LITE_CONSTEXPR void push_back(const T& value) // 1
+        CONSTEXPR void push_back(const T& value) // 1
         {
             _push_back();
             m_data[m_size] = value;
@@ -324,7 +352,7 @@ namespace lite
         }
 
 #if defined(__cpp_rvalue_references)
-        LITE_CONSTEXPR void push_back(T&& value) // 2
+        CONSTEXPR void push_back(T&& value) // 2
         {
             _push_back();
             m_data[m_size] = std::move(value);
@@ -334,14 +362,14 @@ namespace lite
 
 #if defined(__cpp_rvalue_references)
         template<typename... Args>
-        LITE_CONSTEXPR reference emplace_back(Args&&... args)
+        CONSTEXPR reference emplace_back(Args&&... args)
         {
             push_back(T(std::forward<Args>(args)...));
             return back();
         }
 #endif // defined(__cpp_rvalue_references)
 
-        LITE_CONSTEXPR void pop_back()
+        CONSTEXPR void pop_back()
         {
 #if _DEBUG
             assert(!empty());
@@ -349,7 +377,7 @@ namespace lite
             m_size--;
         }
 
-        LITE_CONSTEXPR void resize(size_type count)
+        CONSTEXPR void resize(size_type count)
         {
             if (m_size >= count)
             {
@@ -361,7 +389,7 @@ namespace lite
             m_size = count;
         }
 
-        LITE_CONSTEXPR void resize(size_type count, const value_type& value)
+        CONSTEXPR void resize(size_type count, const value_type& value)
         {
             if (m_size >= count)
             {
@@ -375,7 +403,7 @@ namespace lite
             m_size = count;
         }
 
-        LITE_CONSTEXPR void swap(vector& other) LITE_NOEXCEPT
+        CONSTEXPR void swap(vector& other) NOEXCEPT
         {
             vector<T> temp;
             temp._set(*this);
@@ -384,46 +412,57 @@ namespace lite
         }
 
     private:
-        T* _create(size_type count)
+        template<typename U>
+        typename ENABLE_IF<IS_CLASS<U>::value, U>::type* _create(size_type count)
         {
-            return new T[count];
-            //return (T*)malloc(count * sizeof(size_type));
+            return reinterpret_cast<U*>(new char[count * sizeof(U)]);
         }
 
-        void _destory(T* data)
+        template<typename U>
+        typename ENABLE_IF<!IS_CLASS<U>::value, U>::type* _create(size_type count)
         {
-            delete[] data;
-            //free(data);
+            return new U[count];
         }
 
-        LITE_CONSTEXPR void _set(vector& other) LITE_NOEXCEPT
+        template<typename U>
+        void _destory(U* data, typename ENABLE_IF<IS_CLASS<U>::value, U>::type* = 0)
+        {
+            for (size_t i = 0; i < m_size; i++)
+            {
+                (m_data + i)->~U();
+            }
+        }
+
+        template<typename U>
+        void _destory(U* data, typename ENABLE_IF<!IS_CLASS<U>::value, U>::type* = 0)
+        {
+            delete[] m_data;
+        }
+
+        CONSTEXPR void _set(vector& other) NOEXCEPT
         {
             m_data = other.m_data;
             m_size = other.m_size;
             m_capacity = other.m_capacity;
-            other.m_data = LITE_NULLPTR;
+            other.m_data = NULLPTR;
         }
 
-        LITE_CONSTEXPR void _clear() LITE_NOEXCEPT
+        CONSTEXPR void _clear() NOEXCEPT
         {
-            //delete[] m_data;
-            //free(m_data);
             _destory(m_data);
-            m_data = LITE_NULLPTR;
+            m_data = NULLPTR;
         }
 
-        LITE_CONSTEXPR void _reserve(size_type new_cap)
+        CONSTEXPR void _reserve(size_type new_cap)
         {
-            //T* newData = new T[new_cap];
-            //T* newData = (T*)malloc(new_cap * sizeof(T));
-            T* newData = _create(new_cap);
+            T* newData = _create<T>(new_cap);
             copy_n(m_data, m_size, newData);
             _clear();
             m_data = newData;
             m_capacity = new_cap;
         }
 
-        LITE_CONSTEXPR void _push_back()
+        CONSTEXPR void _push_back()
         {
             if (empty())
             {
@@ -441,7 +480,7 @@ namespace lite
     };
 
     template<typename T>
-    LITE_CONSTEXPR void swap(vector<T>& lhs, vector<T>& rhs) LITE_NOEXCEPT
+    CONSTEXPR void swap(vector<T>& lhs, vector<T>& rhs) NOEXCEPT
     {
         lhs.swap(rhs);
     }

@@ -13,25 +13,26 @@ TEST_CASE("push_back", "lite::vector")
     REQUIRE(vec.size() == 3);
 }
 
-//TEST_CASE("emplace_back", "lite::vector")
-//{
-//    struct Int
-//    {
-//        Int(int _data)
-//            : value(_data)
-//        {
-//        }
-//        ~Int()
-//        {
-//        }
-//        int value;
-//    };
-//    lite::vector<Int> vec;
-//    vec.emplace_back(1);
-//    vec.emplace_back(2);
-//    vec.emplace_back(3);
-//    REQUIRE(vec.size() == 3);
-//}
+TEST_CASE("emplace_back", "lite::vector")
+{
+    struct Int
+    {
+        Int(int _data)
+            : value(_data)
+        {
+        }
+        Int(const Int&) = delete;
+        ~Int()
+        {
+        }
+        int value;
+    };
+    lite::vector<Int> vec;
+    vec.emplace_back(1);
+    vec.emplace_back(2);
+    vec.emplace_back(3);
+    REQUIRE(vec.size() == 3);
+}
 
 TEST_CASE("pop_back", "lite::vector")
 {
