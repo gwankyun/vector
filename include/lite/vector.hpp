@@ -22,15 +22,15 @@
 #    define HAS_TYPE_TRAITS 0
 #  endif // HAS_CXX_11
 #endif // !HAS_TYPE_TRAITS
-    
-#if !defined(ENABLE_IF)
+
+#if !defined(ENABLE_IF) && !defined(IS_CLASS)
 #  if HAS_CXX_11
 #    include <type_traits>
 #    define ENABLE_IF std::enable_if
 #    define IS_CLASS std::is_class
 #  elif defined(HAS_BOOST)
 #    include <boost/type_traits.hpp>
-#    define ENABLE_IF boost::enable_if
+#    define ENABLE_IF boost::enable_if_
 #    define IS_CLASS boost::is_class
 #  endif // HAS_CXX_11
 #endif
@@ -412,6 +412,7 @@ namespace lite
         }
 
     private:
+#if HAS_TYPE_TRAITS
         template<typename U>
         typename ENABLE_IF<IS_CLASS<U>::value, U>::type* _create(size_type count)
         {
@@ -438,6 +439,17 @@ namespace lite
         {
             delete[] m_data;
         }
+#else
+        T* _create(size_type count)
+        {
+            return new T[count];
+        }
+
+        void _destory(T* data)
+        {
+            delete[] m_data;
+        }
+#endif // HAS_TYPE_TRAITS
 
         CONSTEXPR void _set(vector& other) NOEXCEPT
         {

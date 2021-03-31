@@ -50,6 +50,7 @@ if(Catch2_FOUND)
   target_sources(${test}
     PRIVATE
     src/test.cpp
+    include/lite/vector.hpp
   )
   target_link_libraries(${test}
     PUBLIC Catch2::Catch2 vector)
