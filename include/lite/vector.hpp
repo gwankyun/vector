@@ -7,32 +7,60 @@
 #include <utility> // std::move
 #include <climits> //
 
-#ifndef HAS_CXX_11
-#  if __cplusplus >= 201103L
-#    define HAS_CXX_11 1
+#ifndef CXX_VER
+#  if __cplusplus >= 201703L
+#    define CXX_VER 17
+#  elif __cplusplus >= 201103L
+#    define CXX_VER 11
 #  else
-#    define HAS_CXX_11 0
-#  endif // __cplusplus >= 201103L
-#endif // !HAS_CXX_11
+#    define CXX_VER 03
+#  endif
+#endif
 
 #ifndef HAS_TYPE_TRAITS
-#  if HAS_CXX_11 || defined(HAS_BOOST)
+#  if (CXX_VER >= 11) || defined(HAS_BOOST)
 #    define HAS_TYPE_TRAITS 1
 #  else
 #    define HAS_TYPE_TRAITS 0
-#  endif // HAS_CXX_11
-#endif // !HAS_TYPE_TRAITS
+#  endif
+#endif
 
-#if !defined(ENABLE_IF) && !defined(IS_CLASS)
-#  if HAS_CXX_11
-#    include <type_traits>
+#if CXX_VER >= 11
+#  include <type_traits>
+#elif defined(HAS_BOOST)
+#  include <boost/type_traits.hpp>
+#endif
+
+#ifndef ENABLE_IF
+#  if CXX_VER >= 11
 #    define ENABLE_IF std::enable_if
+#  elif defined(HAS_BOOST)
+#    define ENABLE_IF boost::enable_if_
+#  endif
+#endif
+
+#ifndef IS_CLASS
+#  if CXX_VER >= 11
 #    define IS_CLASS std::is_class
 #  elif defined(HAS_BOOST)
-#    include <boost/type_traits.hpp>
-#    define ENABLE_IF boost::enable_if_
 #    define IS_CLASS boost::is_class
-#  endif // HAS_CXX_11
+#  endif
+#endif
+
+#ifndef ENABLE_IF_T
+#  if CXX_VER >= 17
+#    define ENABLE_IF_T(x, y) std::enable_if_t<x, y>
+#  else
+#    define ENABLE_IF_T(x, y) typename ENABLE_IF<x, y>::type
+#  endif
+#endif
+
+#ifndef IS_CLASS_V
+#  if CXX_VER >= 17
+#    define IS_CLASS_V(x) std::is_class_v<x>
+#  else
+#    define IS_CLASS_V(x) IS_CLASS<x>::value
+#  endif
 #endif
 
 #ifndef ULLONG_MAX
@@ -412,21 +440,50 @@ namespace lite
         }
 
     private:
-#if HAS_TYPE_TRAITS
+#if CXX_VER >= 17
         template<typename U>
-        typename ENABLE_IF<IS_CLASS<U>::value, U>::type* _create(size_type count)
+        U* _create(size_type count)
+        {
+            if constexpr (std::is_class_v<U>)
+            {
+                return reinterpret_cast<U*>(new char[count * sizeof(U)]);
+            }
+            else
+            {
+                return new U[count];
+            }
+        }
+
+        template<typename U>
+        void _destory(U* data)
+        {
+            if constexpr (std::is_class_v<U>)
+            {
+                for (size_t i = 0; i < m_size; i++)
+                {
+                    (m_data + i)->~U();
+                }
+            }
+            else
+            {
+                delete[] m_data;
+            }
+        }
+#elif HAS_TYPE_TRAITS
+        template<typename U>
+        ENABLE_IF_T(IS_CLASS_V(U), U)* _create(size_type count)
         {
             return reinterpret_cast<U*>(new char[count * sizeof(U)]);
         }
 
         template<typename U>
-        typename ENABLE_IF<!IS_CLASS<U>::value, U>::type* _create(size_type count)
+        ENABLE_IF_T(!IS_CLASS_V(U), U)* _create(size_type count)
         {
             return new U[count];
         }
 
         template<typename U>
-        void _destory(U* data, typename ENABLE_IF<IS_CLASS<U>::value, U>::type* = 0)
+        void _destory(U* data, ENABLE_IF_T(IS_CLASS_V(U), U)* = 0)
         {
             for (size_t i = 0; i < m_size; i++)
             {
@@ -435,7 +492,7 @@ namespace lite
         }
 
         template<typename U>
-        void _destory(U* data, typename ENABLE_IF<!IS_CLASS<U>::value, U>::type* = 0)
+        void _destory(U* data, ENABLE_IF_T(!IS_CLASS_V(U), U)* = 0)
         {
             delete[] m_data;
         }
