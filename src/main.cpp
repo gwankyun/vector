@@ -4,6 +4,7 @@
 #include <cassert> // std::assert
 #include <iostream>
 #include <type_traits>
+#include <algorithm>
 #include <Windows.h>
 
 struct Int
@@ -27,7 +28,7 @@ struct Object
     }
     ~Object()
     {
-        std::cout << __FUNCTION__ << ": " << value << std::endl;
+        //std::cout << __FUNCTION__ << ": " << value << std::endl;
     }
     int value = 0;
 };
@@ -71,6 +72,24 @@ int main()
     {
         std::vector<Object> v;
         v.emplace_back(888);
+    }
+
+    {
+        std::string sub = "234";
+
+        std::string str = "12345";
+
+        lite::vector<char> vec;
+        std::copy_n(str.begin(), str.size(), std::back_inserter(vec));
+        vec.push_back('\0');
+
+        //auto iter = std::search(str.begin(), str.end(), sub.begin(), sub.end());
+        auto iter = std::search(vec.begin(), vec.end(), sub.begin(), sub.end());
+        if (iter != vec.end())
+        {
+            //std::cout << str.substr(iter - str.begin(), sub.size()) << std::endl;
+            std::cout << "yes" << std::endl;
+        }
     }
 
     return 0;

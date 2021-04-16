@@ -364,7 +364,7 @@ namespace lite
         template<typename... Args>
         CONSTEXPR reference emplace_back(Args&&... args)
         {
-            push_back(T(std::forward<Args>(args)...));
+            push_back(std::move(T(std::forward<Args>(args)...)));
             return back();
         }
 #endif // defined(__cpp_rvalue_references)
