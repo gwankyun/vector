@@ -21,29 +21,31 @@ cmake_print_variables(Boost_FOUND)
 
 add_library(vector INTERFACE)
 
-set_target_properties(vector PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_SOURCE_DIR}/include>;$<INSTALL_INTERFACE:include>"
-  INTERFACE_LINK_LIBRARIES "$<$<TARGET_EXISTS:Boost::headers>:Boost::headers>"
-  INTERFACE_COMPILE_DEFINITIONS "$<$<TARGET_EXISTS:Boost::headers>:HAS_BOOST>"
+set(target vector)
+
+set_target_properties(${target} PROPERTIES
+  INTERFACE_INCLUDE_DIRECTORIES
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>;$<$<BOOL:${Boost_FOUND}>:${Boost_INCLUDE_DIR}>"
+  INTERFACE_COMPILE_DEFINITIONS "$<$<BOOL:${Boost_FOUND}>:HAS_BOOST>"
 )
 
 # install the target and create export-set
-install(TARGETS vector
-        EXPORT vectorTargets
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-        RUNTIME DESTINATION bin
-        INCLUDES DESTINATION include
+install(TARGETS ${target}
+  EXPORT vectorTargets
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  RUNTIME DESTINATION bin
+  INCLUDES DESTINATION include
 )
 
 # install header file
 install(FILES include/lite/vector.hpp DESTINATION include/lite)
 
 # generate and install export file
-install(EXPORT vectorTargets
-        FILE vectorTargets.cmake
-        NAMESPACE vector::
-        DESTINATION lib/cmake/vector
+install(EXPORT ${target}Targets
+  FILE ${target}Targets.cmake
+  NAMESPACE ${target}::
+  DESTINATION lib/cmake/${target}
 )
 
 # include CMakePackageConfigHelpers macro
@@ -52,38 +54,38 @@ include(CMakePackageConfigHelpers)
 # set version
 set(version 0.0.1)
 
-set_property(TARGET vector PROPERTY VERSION ${version})
-set_property(TARGET vector PROPERTY SOVERSION 0)
-set_property(TARGET vector PROPERTY
-  INTERFACE_vector_MAJOR_VERSION 0)
-set_property(TARGET vector APPEND PROPERTY
-  COMPATIBLE_INTERFACE_STRING vector_MAJOR_VERSION
+set_property(TARGET ${target} PROPERTY VERSION ${version})
+set_property(TARGET ${target} PROPERTY SOVERSION 0)
+set_property(TARGET ${target} PROPERTY
+  INTERFACE_${target}_MAJOR_VERSION 0)
+set_property(TARGET ${target} APPEND PROPERTY
+  COMPATIBLE_INTERFACE_STRING ${target}_MAJOR_VERSION
 )
 
 # generate the version file for the config file
 write_basic_package_version_file(
-  "${CMAKE_CURRENT_BINARY_DIR}/vectorConfigVersion.cmake"
+  "${CMAKE_CURRENT_BINARY_DIR}/${target}ConfigVersion.cmake"
   VERSION "${version}"
   COMPATIBILITY AnyNewerVersion
 )
 
 # create config file
 configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
-  "${CMAKE_CURRENT_BINARY_DIR}/vectorConfig.cmake"
-  INSTALL_DESTINATION lib/cmake/vector
+  "${CMAKE_CURRENT_BINARY_DIR}/${target}Config.cmake"
+  INSTALL_DESTINATION lib/cmake/${target}
 )
 
 # install config files
 install(FILES
-  "${CMAKE_CURRENT_BINARY_DIR}/vectorConfig.cmake"
-  "${CMAKE_CURRENT_BINARY_DIR}/vectorConfigVersion.cmake"
-  DESTINATION lib/cmake/vector
+  "${CMAKE_CURRENT_BINARY_DIR}/${target}Config.cmake"
+  "${CMAKE_CURRENT_BINARY_DIR}/${target}ConfigVersion.cmake"
+  DESTINATION lib/cmake/${target}
 )
 
 # generate the export targets for the build tree
-export(EXPORT vectorTargets
-  FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/vectorTargets.cmake"
-  NAMESPACE vector::
+export(EXPORT ${target}Targets
+  FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/${target}Targets.cmake"
+  NAMESPACE ${target}::
 )
 
 set(main main)
