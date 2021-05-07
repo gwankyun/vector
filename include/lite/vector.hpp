@@ -9,30 +9,30 @@
 
 #ifndef CXX_VER
 #  if __cplusplus >= 201703L
-#    define CXX_VER 17
+#    define CXX_VER 2017
 #  elif __cplusplus >= 201103L
-#    define CXX_VER 11
+#    define CXX_VER 2011
 #  else
-#    define CXX_VER 03
+#    define CXX_VER 1998
 #  endif
 #endif
 
 #ifndef HAS_TYPE_TRAITS
-#  if (CXX_VER >= 11) || defined(HAS_BOOST)
+#  if (CXX_VER >= 2011) || defined(HAS_BOOST)
 #    define HAS_TYPE_TRAITS 1
 #  else
 #    define HAS_TYPE_TRAITS 0
 #  endif
 #endif
 
-#if CXX_VER >= 11
+#if CXX_VER >= 2011
 #  include <type_traits>
 #elif defined(HAS_BOOST)
 #  include <boost/type_traits.hpp>
 #endif
 
 #ifndef ENABLE_IF
-#  if CXX_VER >= 11
+#  if CXX_VER >= 2011
 #    define ENABLE_IF std::enable_if
 #  elif defined(HAS_BOOST)
 #    define ENABLE_IF boost::enable_if_
@@ -40,7 +40,7 @@
 #endif
 
 #ifndef IS_CLASS
-#  if CXX_VER >= 11
+#  if CXX_VER >= 2011
 #    define IS_CLASS std::is_class
 #  elif defined(HAS_BOOST)
 #    define IS_CLASS boost::is_class
@@ -48,7 +48,7 @@
 #endif
 
 #ifndef ENABLE_IF_T
-#  if CXX_VER >= 17
+#  if CXX_VER >= 2017
 #    define ENABLE_IF_T(x, y) std::enable_if_t<x, y>
 #  else
 #    define ENABLE_IF_T(x, y) typename ENABLE_IF<x, y>::type
@@ -56,7 +56,7 @@
 #endif
 
 #ifndef IS_CLASS_V
-#  if CXX_VER >= 17
+#  if CXX_VER >= 2017
 #    define IS_CLASS_V(x) std::is_class_v<x>
 #  else
 #    define IS_CLASS_V(x) IS_CLASS<x>::value
@@ -440,7 +440,7 @@ namespace lite
         }
 
     private:
-#if CXX_VER >= 17
+#if CXX_VER >= 2017
         template<typename U>
         U* _create(size_type count)
         {
