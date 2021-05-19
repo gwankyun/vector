@@ -93,7 +93,7 @@ add_executable(${main})
 target_sources(${main}
   PRIVATE
     src/main.cpp
-    include/lite/vector.ixx
+    include/lite/vector.cppm
 )
 target_link_libraries(${main} PUBLIC vector)
 target_include_directories(${main} PRIVATE include)
