@@ -1,96 +1,217 @@
-#include <vector> // std::vector
-#include <lite/vector.hpp>
-#include <cstring> // memcmp
-#include <cassert> // std::assert
-#include <iostream>
-#include <type_traits>
-#include <algorithm>
-#include <Windows.h>
+import lite.vector;
+import std.core;
 
-struct Int
-{
-    Int(int data)
-        : m_data(data)
-    {
-    }
-    ~Int()
-    {
-    }
-    int m_data = 0;
-};
+#ifndef STRINGIFY_IMPL
+#  define STRINGIFY_IMPL(x) #x
+#endif
 
-struct Object
+#ifndef STRINGIFY
+#  define STRINGIFY(x) STRINGIFY_IMPL(x)
+#endif
+
+inline std::string current(std::source_location location)
 {
-    //Object() = default;
-    Object(int _value)
-        : value(_value)
-    {
-    }
-    ~Object()
-    {
-        //std::cout << __FUNCTION__ << ": " << value << std::endl;
-    }
-    int value = 0;
-};
+    return std::format("[{} {:4}]", location.function_name(), location.line());
+}
+
+#ifndef TEST_CASE
+#  define TEST_CASE(...)
+#endif
+
+#ifndef REQUIRE
+#  define REQUIRE(expr) std::cout << current(std::source_location::current()) << " [" << STRINGIFY(expr) << "] " << ((expr) ? "passed" : "failed") << std::endl;
+#endif
 
 int main()
 {
-    lite::vector<char> vec;
-    vec.push_back('1');
-    vec.push_back('2');
-    vec.push_back('3');
-    assert(memcmp(vec.data(), "123", vec.size()) == 0);
-
-    //std::vector<Int> svec;
-    //svec.emplace_back(1);
-    //lite::vector<Int> lvec;
-    //lvec.emplace_back(1);
-
-    //auto o1 = new Object;
-    //auto o1 = (Object*)malloc(sizeof(Object));
-    //if (o1 != nullptr)
-    //{
-    //    o1->value = 1;
-    //    delete o1;
-    //}
-
-    auto obj = reinterpret_cast<Object*>(new char[sizeof(Object)]);
-    new (obj) Object(100);
-    obj->~Object();
-
-    std::cout << std::is_trivial<int>::value << std::endl;
-    std::cout << std::is_trivial<BYTE>::value << std::endl;
-    std::cout << std::is_trivial<Object>::value << std::endl;
-
-    auto i = reinterpret_cast<int*>(new char[sizeof(int)]);
-    new (i) int(99);
-    delete[] i;
-
-    lite::vector<Object> v;
-    v.emplace_back(999);
-
+    TEST_CASE("push_back", "lite::vector")
     {
-        std::vector<Object> v;
-        v.emplace_back(888);
+        lite::vector<int> vec;
+        vec.push_back(1);
+        vec.push_back(2);
+        vec.push_back(3);
+        REQUIRE(vec.size() == 3);
     }
 
+    TEST_CASE("emplace_back", "lite::vector")
     {
-        std::string sub = "234";
-
-        std::string str = "12345";
-
-        lite::vector<char> vec;
-        std::copy_n(str.begin(), str.size(), std::back_inserter(vec));
-        vec.push_back('\0');
-
-        //auto iter = std::search(str.begin(), str.end(), sub.begin(), sub.end());
-        auto iter = std::search(vec.begin(), vec.end(), sub.begin(), sub.end());
-        if (iter != vec.end())
+        struct Int
         {
-            //std::cout << str.substr(iter - str.begin(), sub.size()) << std::endl;
-            std::cout << "yes" << std::endl;
-        }
+            Int(int _data)
+                : value(_data)
+            {
+            }
+            Int(const Int&) = delete;
+            ~Int()
+            {
+            }
+            int value;
+        };
+        lite::vector<Int> vec;
+        vec.emplace_back(1);
+        vec.emplace_back(2);
+        vec.emplace_back(3);
+        REQUIRE(vec.size() == 3);
     }
 
+    TEST_CASE("pop_back", "lite::vector")
+    {
+        lite::vector<int> vec;
+        vec.push_back(1);
+        vec.push_back(2);
+        vec.push_back(3);
+        vec.pop_back();
+        vec.pop_back();
+        REQUIRE(vec.size() == 1);
+    }
+
+    TEST_CASE("clear & empty", "lite::vector")
+    {
+        lite::vector<int> vec;
+        vec.push_back(1);
+        vec.push_back(2);
+        vec.push_back(3);
+        vec.pop_back();
+        vec.clear();
+        REQUIRE(vec.empty());
+    }
+
+    TEST_CASE("data", "lite::vector")
+    {
+        lite::vector<char> vec;
+        vec.push_back('1');
+        vec.push_back('2');
+        vec.push_back('3');
+        REQUIRE(std::memcmp(vec.data(), "123", vec.size()) == 0);
+    }
+
+    TEST_CASE("resize", "lite::vector")
+    {
+        lite::vector<char> vec;
+        vec.push_back('1');
+        vec.push_back('2');
+        vec.push_back('3');
+        vec.resize(5, '0');
+        REQUIRE(std::memcmp(vec.data(), "12300", vec.size()) == 0);
+    }
+
+    TEST_CASE("reserve", "lite::vector")
+    {
+        lite::vector<char> vec;
+        vec.push_back('1');
+        vec.push_back('2');
+        vec.push_back('3');
+        vec.reserve(5);
+        REQUIRE((vec.size() == 3 && vec.capacity() == 5));
+    }
+
+    TEST_CASE("iterator", "lite::vector")
+    {
+        lite::vector<int> vec;
+        vec.push_back(1);
+        vec.push_back(2);
+        vec.push_back(3);
+
+        auto b = vec.begin();
+        auto rb = vec.rbegin();
+        auto e = vec.end();
+        auto re = vec.rend();
+
+        auto cb = vec.cbegin();
+        auto crb = vec.crbegin();
+        auto ce = vec.cend();
+        auto cre = vec.crend();
+
+        REQUIRE(*b == 1);
+        REQUIRE(*rb == 3);
+        REQUIRE(*(e - 1) == 3);
+        REQUIRE(*(re + 1) == 1);
+
+        REQUIRE(*cb == 1);
+        REQUIRE(*crb == 3);
+        REQUIRE(*(ce - 1) == 3);
+        REQUIRE(*(cre + 1) == 1);
+    }
+
+    TEST_CASE("front & back", "lite::vector")
+    {
+        lite::vector<int> vec;
+        vec.push_back(1);
+        vec.push_back(2);
+        vec.push_back(3);
+        REQUIRE(vec.front() == 1);
+        REQUIRE(vec.back() == 3);
+    }
+
+    TEST_CASE("[] & at", "lite::vector")
+    {
+        lite::vector<int> vec;
+        vec.push_back(1);
+        vec.push_back(2);
+        vec.push_back(3);
+        REQUIRE(vec[1] == 2);
+        REQUIRE(vec.at(2) == 3);
+    }
+
+    TEST_CASE("insert", "lite::vector")
+    {
+        lite::vector<char> vec;
+        vec.push_back('1');
+        vec.push_back('2');
+        vec.push_back('3');
+        auto iter = vec.begin();
+        iter++;
+        vec.insert(iter, '0');
+        REQUIRE(std::memcmp(vec.data(), "1023", vec.size()) == 0);
+        iter = vec.begin();
+        iter++;
+        vec.insert(iter, 2, '4');
+        REQUIRE(std::memcmp(vec.data(), "144023", vec.size()) == 0);
+    }
+
+    TEST_CASE("erase", "lite::vector")
+    {
+        lite::vector<char> vec;
+        vec.push_back('1');
+        vec.push_back('2');
+        vec.push_back('3');
+        auto iter = vec.begin();
+        iter++;
+        vec.erase(iter);
+        REQUIRE(std::memcmp(vec.data(), "13", vec.size()) == 0);
+        vec.push_back('4');
+        vec.push_back('5');
+        iter = vec.begin();
+        auto lst = iter + 2;
+        vec.erase(iter, lst);
+        REQUIRE(std::memcmp(vec.data(), "45", vec.size()) == 0);
+        REQUIRE(vec.erase(vec.begin() + vec.size() - 1) == vec.end());
+    }
+
+    TEST_CASE("fill_n", "lite::vector")
+    {
+        lite::vector<char> vec;
+        vec.resize(3, 'a');
+        std::fill_n(vec.begin(), vec.size(), 'c');
+        REQUIRE(std::memcmp(vec.data(), "ccc", vec.size()) == 0);
+    }
+
+    TEST_CASE("swap", "lite::vector")
+    {
+        lite::vector<char> vec1;
+        vec1.push_back('1');
+        vec1.push_back('2');
+        vec1.push_back('3');
+        lite::vector<char> vec2;
+        vec2.push_back('4');
+        vec2.push_back('5');
+        vec2.push_back('6');
+        vec1.swap(vec2);
+        REQUIRE(std::memcmp(vec1.data(), "456", vec1.size()) == 0);
+        REQUIRE(std::memcmp(vec2.data(), "123", vec2.size()) == 0);
+        lite::swap(vec1, vec2);
+        REQUIRE(std::memcmp(vec1.data(), "123", vec1.size()) == 0);
+        REQUIRE(std::memcmp(vec2.data(), "456", vec2.size()) == 0);
+    }
     return 0;
 }

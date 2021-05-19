@@ -93,11 +93,12 @@ add_executable(${main})
 target_sources(${main}
   PRIVATE
     src/main.cpp
-    include/lite/vector.hpp
+    include/lite/vector.ixx
 )
 target_link_libraries(${main} PUBLIC vector)
 target_include_directories(${main} PRIVATE include)
 target_compile_features(${main} PRIVATE cxx_std_17)
+target_compile_options(${main} PRIVATE "$<$<CXX_COMPILER_ID:MSVC>:/std:c++20;/std:c17;/experimental:module;>")
 
 set(test test)
 find_package(Catch2 REQUIRED)

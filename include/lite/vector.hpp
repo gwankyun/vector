@@ -1,97 +1,5 @@
 #pragma once
-#include <cstddef> // std::size_t std::ptrdiff_t
-#include <stdexcept> // std::out_of_range
-#include <algorithm> // std::fill std::copy
-#include <cassert> // std::assert
-#include <iterator> // iterator_traits
-#include <utility> // std::move
-#include <climits> //
-
-#ifndef CXX_VER
-#  if __cplusplus >= 201703L
-#    define CXX_VER 2017
-#  elif __cplusplus >= 201103L
-#    define CXX_VER 2011
-#  else
-#    define CXX_VER 1998
-#  endif
-#endif
-
-#ifndef HAS_TYPE_TRAITS
-#  if (CXX_VER >= 2011) || defined(HAS_BOOST)
-#    define HAS_TYPE_TRAITS 1
-#  else
-#    define HAS_TYPE_TRAITS 0
-#  endif
-#endif
-
-#if CXX_VER >= 2011
-#  include <type_traits>
-#elif defined(HAS_BOOST)
-#  include <boost/type_traits.hpp>
-#endif
-
-#ifndef ENABLE_IF
-#  if CXX_VER >= 2011
-#    define ENABLE_IF std::enable_if
-#  elif defined(HAS_BOOST)
-#    define ENABLE_IF boost::enable_if_
-#  endif
-#endif
-
-#ifndef IS_CLASS
-#  if CXX_VER >= 2011
-#    define IS_CLASS std::is_class
-#  elif defined(HAS_BOOST)
-#    define IS_CLASS boost::is_class
-#  endif
-#endif
-
-#ifndef ENABLE_IF_T
-#  if CXX_VER >= 2017
-#    define ENABLE_IF_T(x, y) std::enable_if_t<x, y>
-#  else
-#    define ENABLE_IF_T(x, y) typename ENABLE_IF<x, y>::type
-#  endif
-#endif
-
-#ifndef IS_CLASS_V
-#  if CXX_VER >= 2017
-#    define IS_CLASS_V(x) std::is_class_v<x>
-#  else
-#    define IS_CLASS_V(x) IS_CLASS<x>::value
-#  endif
-#endif
-
-#ifndef ULLONG_MAX
-#  if _UI64_MAX
-#    define ULLONG_MAX _UI64_MAX
-#  endif // _UI64_MAX
-#endif // !ULLONG_MAX
-
-#ifndef NOEXCEPT
-#  define NOEXCEPT
-#endif // !NOEXCEPT
-
-#ifndef CONSTEXPR
-#  if defined(__cpp_constexpr)
-#    define CONSTEXPR constexpr
-#  else
-#    define CONSTEXPR inline
-#  endif // defined(__cpp_constexpr)
-#endif // !CONSTEXPR
-
-#ifndef NULLPTR
-#  define NULLPTR NULL
-#endif // !NULLPTR
-
-#ifndef CONSTEXPR_DYNAMIC_ALLOC
-#  if defined(__cpp_constexpr_dynamic_alloc)
-#    define CONSTEXPR_DYNAMIC_ALLOC constexpr
-#  else
-#    define CONSTEXPR_DYNAMIC_ALLOC inline
-#  endif // defined(__cpp_constexpr_dynamic_alloc)
-#endif // !CONSTEXPR_DYNAMIC_ALLOC
+#include "common.h"
 
 namespace lite
 {
@@ -148,17 +56,13 @@ namespace lite
 
         CONSTEXPR reference operator[](size_type pos)
         {
-#if _DEBUG
             assert(pos < m_size);
-#endif // _DEBUG
             return m_data[pos];
         }
 
         CONSTEXPR const_reference operator[](size_type pos) const
         {
-#if _DEBUG
             assert(pos < m_size);
-#endif // _DEBUG
             return m_data[pos];
         }
 
@@ -182,33 +86,25 @@ namespace lite
 
         CONSTEXPR reference front()
         {
-#if _DEBUG
             assert(!empty());
-#endif // _DEBUG
             return m_data[0];
         }
 
         CONSTEXPR const_reference front() const
         {
-#if _DEBUG
             assert(!empty());
-#endif // _DEBUG
             return m_data[0];
         }
 
         CONSTEXPR reference back()
         {
-#if _DEBUG
             assert(!empty());
-#endif // _DEBUG
             return m_data[m_size - 1];
         }
 
         CONSTEXPR const_reference back() const
         {
-#if _DEBUG
             assert(!empty());
-#endif // _DEBUG
             return m_data[m_size - 1];
         }
 
@@ -298,7 +194,7 @@ namespace lite
 
         CONSTEXPR size_type max_size() const NOEXCEPT
         {
-            return UULONG_MAX;
+            return ULLONG_MAX;
         }
 
         CONSTEXPR void reserve(size_type new_cap)
@@ -359,9 +255,7 @@ namespace lite
 
         CONSTEXPR iterator erase(const_iterator first, const_iterator last) //2
         {
-#if _DEBUG
             assert(begin() <= first && first < end());
-#endif // _DEBUG
             difference_type fst = first - begin();
             difference_type lst = last - begin();
             std::rotate(begin() + fst, begin() + lst, end());
@@ -386,7 +280,7 @@ namespace lite
             m_data[m_size] = std::move(value);
             m_size++;
         }
-#endif // defined(__cpp_rvalue_references)
+#endif
 
 #if defined(__cpp_rvalue_references)
         template<typename... Args>
@@ -395,13 +289,11 @@ namespace lite
             push_back(std::move(T(std::forward<Args>(args)...)));
             return back();
         }
-#endif // defined(__cpp_rvalue_references)
+#endif
 
         CONSTEXPR void pop_back()
         {
-#if _DEBUG
             assert(!empty());
-#endif // _DEBUG
             m_size--;
         }
 
@@ -455,18 +347,18 @@ namespace lite
         }
 
         template<typename U>
-        void _destory(U* data)
+        void _destory(U* data, size_t size)
         {
             if constexpr (std::is_class_v<U>)
             {
-                for (size_t i = 0; i < m_size; i++)
+                for (size_t i = 0; i < size; i++)
                 {
-                    (m_data + i)->~U();
+                    (data + i)->~U();
                 }
             }
             else
             {
-                delete[] m_data;
+                delete[] data;
             }
         }
 #elif HAS_TYPE_TRAITS
@@ -483,7 +375,7 @@ namespace lite
         }
 
         template<typename U>
-        void _destory(U* data, ENABLE_IF_T(IS_CLASS_V(U), U)* = 0)
+        void _destory(U* data, size_t size, ENABLE_IF_T(IS_CLASS_V(U), U)* = 0)
         {
             for (size_t i = 0; i < m_size; i++)
             {
@@ -492,7 +384,7 @@ namespace lite
         }
 
         template<typename U>
-        void _destory(U* data, ENABLE_IF_T(!IS_CLASS_V(U), U)* = 0)
+        void _destory(U* data, size_t size, ENABLE_IF_T(!IS_CLASS_V(U), U)* = 0)
         {
             delete[] m_data;
         }
@@ -502,11 +394,11 @@ namespace lite
             return new T[count];
         }
 
-        void _destory(T* data)
+        void _destory(T* data, size_t size)
         {
             delete[] m_data;
         }
-#endif // HAS_TYPE_TRAITS
+#endif
 
         CONSTEXPR void _set(vector& other) NOEXCEPT
         {
@@ -518,7 +410,7 @@ namespace lite
 
         CONSTEXPR void _clear() NOEXCEPT
         {
-            _destory(m_data);
+            _destory(m_data, m_size);
             m_data = NULLPTR;
         }
 
