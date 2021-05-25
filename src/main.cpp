@@ -1,3 +1,4 @@
+module main;
 import lite.vector;
 import std.core;
 
