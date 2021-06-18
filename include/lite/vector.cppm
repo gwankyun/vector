@@ -1,4 +1,7 @@
 module;
+#ifndef CXX_VER
+#  define CXX_VER 2020
+#endif
 #include "common.h"
 export module lite.vector;
 import std.core;

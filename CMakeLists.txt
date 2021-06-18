@@ -88,20 +88,22 @@ export(EXPORT ${target}Targets
   NAMESPACE ${target}::
 )
 
+find_package(Catch2 REQUIRED)
+
 set(main main)
 add_executable(${main})
 target_sources(${main}
   PRIVATE
     src/main.cpp
+    src/main.cppm
     include/lite/vector.cppm
 )
-target_link_libraries(${main} PUBLIC vector)
+target_link_libraries(${main} PUBLIC vector Catch2::Catch2)
 target_include_directories(${main} PRIVATE include)
-target_compile_features(${main} PRIVATE cxx_std_17)
-target_compile_options(${main} PRIVATE "$<$<CXX_COMPILER_ID:MSVC>:/std:c++20;/std:c17;/experimental:module;>")
+target_compile_features(${main} PRIVATE cxx_std_20)
+target_compile_options(${main} PRIVATE "$<$<CXX_COMPILER_ID:MSVC>:/std:c17;/experimental:module;>")
 
 set(test test)
-find_package(Catch2 REQUIRED)
 if(Catch2_FOUND)
   add_executable(${test})
   target_sources(${test}

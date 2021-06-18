@@ -23,7 +23,7 @@ inline std::string current(std::source_location location)
 #  define REQUIRE(expr) std::cout << current(std::source_location::current()) << " [" << STRINGIFY(expr) << "] " << ((expr) ? "passed" : "failed") << std::endl;
 #endif
 
-int main()
+int main(int argc, char* argv[])
 {
     TEST_CASE("push_back", "lite::vector")
     {

@@ -22,14 +22,6 @@
 #  include <utility> // std::move
 #endif
 
-#ifndef USING
-#  if CXX_VER >= 2011
-#    define USING(new_type, old_type) using new_type = old_type
-#  else
-#    define USING(new_type, old_type) typedef old_type new_type
-#  endif
-#endif
-
 #ifndef HAS_TYPE_TRAITS
 #  if (CXX_VER >= 2011) || defined(HAS_BOOST)
 #    define HAS_TYPE_TRAITS 1
