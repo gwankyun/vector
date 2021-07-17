@@ -1,5 +1,5 @@
 ﻿# cmake最低版本
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.21)
 
 # 啟用IDE目錄功能
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -14,7 +14,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 # 項目名
 project(vector)
 
-add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/W4;/MP;/Zc:__cplusplus;/std:c17;>")
+# 編譯器選項
+add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/W4;/MP;/Zc:__cplusplus;/std:c++latest;/std:c17;/experimental:module;>")
 
 find_package(Boost)
 cmake_print_variables(Boost_FOUND)
@@ -89,6 +90,8 @@ export(EXPORT ${target}Targets
 )
 
 find_package(Catch2 REQUIRED)
+find_package(ztest REQUIRED)
+cmake_print_variables(ztest_FOUND)
 
 set(main main)
 add_executable(${main})
@@ -98,10 +101,10 @@ target_sources(${main}
     src/main.cppm
     include/lite/vector.cppm
 )
-target_link_libraries(${main} PUBLIC vector Catch2::Catch2)
+target_link_libraries(${main} PUBLIC vector ztest::ztest)
 target_include_directories(${main} PRIVATE include)
-target_compile_features(${main} PRIVATE cxx_std_20)
-target_compile_options(${main} PRIVATE "$<$<CXX_COMPILER_ID:MSVC>:/std:c17;/experimental:module;>")
+# target_compile_features(${main} PRIVATE cxx_std_20)
+# target_compile_options(${main} PRIVATE "$<$<CXX_COMPILER_ID:MSVC>:/std:c17;/experimental:module;>")
 
 set(test test)
 if(Catch2_FOUND)

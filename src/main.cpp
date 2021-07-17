@@ -1,27 +1,9 @@
+module;
+#include <ztest/macro.h>
 module main;
 import lite.vector;
 import std.core;
-
-#ifndef STRINGIFY_IMPL
-#  define STRINGIFY_IMPL(x) #x
-#endif
-
-#ifndef STRINGIFY
-#  define STRINGIFY(x) STRINGIFY_IMPL(x)
-#endif
-
-inline std::string current(std::source_location location)
-{
-    return std::format("[{} {:4}]", location.function_name(), location.line());
-}
-
-#ifndef TEST_CASE
-#  define TEST_CASE(...)
-#endif
-
-#ifndef REQUIRE
-#  define REQUIRE(expr) std::cout << current(std::source_location::current()) << " [" << STRINGIFY(expr) << "] " << ((expr) ? "passed" : "failed") << std::endl;
-#endif
+import ztest;
 
 int main(int argc, char* argv[])
 {
