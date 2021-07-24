@@ -90,8 +90,13 @@ export(EXPORT ${target}Targets
 )
 
 find_package(Catch2 REQUIRED)
-find_package(ztest REQUIRED)
+find_package(ztest)
 cmake_print_variables(ztest_FOUND)
+
+if(NOT ztest_FOUND)
+  add_subdirectory(ztest)
+  add_library(ztest::ztest ALIAS ztest)
+endif()
 
 set(main main)
 add_executable(${main})
