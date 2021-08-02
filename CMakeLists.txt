@@ -14,8 +14,13 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 # 項目名
 project(vector)
 
+set(CMAKE_MODULE_PATH
+  ${CMAKE_MODULE_PATH}
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+include(common)
+
 # 編譯器選項
-add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/W4;/MP;/Zc:__cplusplus;/std:c++latest;/std:c17;/experimental:module;>")
+add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/W4;/MP;/Zc:__cplusplus;/std:c17;/experimental:module;>")
 
 find_package(Boost)
 cmake_print_variables(Boost_FOUND)
@@ -24,70 +29,28 @@ add_library(vector INTERFACE)
 
 set(target vector)
 
-set_target_properties(${target} PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES
-    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>;$<$<BOOL:${Boost_FOUND}>:${Boost_INCLUDE_DIR}>"
-  INTERFACE_COMPILE_DEFINITIONS "$<$<BOOL:${Boost_FOUND}>:HAS_BOOST>"
+include(GNUInstallDirs)
+
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lite" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+
+target_include_directories(${target}
+  INTERFACE
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include;$<$<BOOL:${Boost_FOUND}>:${Boost_INCLUDE_DIR}>>"
+    "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR};$<$<BOOL:${Boost_FOUND}>:${Boost_INCLUDE_DIR}>>"
 )
 
-# install the target and create export-set
-install(TARGETS ${target}
-  EXPORT vectorTargets
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib
-  RUNTIME DESTINATION bin
-  INCLUDES DESTINATION include
+target_sources(${target}
+  INTERFACE
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/lite/vector.cppm>"
+    "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/lite/vector.cppm>"
 )
 
-# install header file
-install(FILES include/lite/vector.hpp DESTINATION include/lite)
-
-# generate and install export file
-install(EXPORT ${target}Targets
-  FILE ${target}Targets.cmake
-  NAMESPACE ${target}::
-  DESTINATION lib/cmake/${target}
+target_compile_definitions(${target}
+  INTERFACE
+    "$<$<BOOL:${Boost_FOUND}>:HAS_BOOST>"
 )
 
-# include CMakePackageConfigHelpers macro
-include(CMakePackageConfigHelpers)
-
-# set version
-set(version 0.0.1)
-
-set_property(TARGET ${target} PROPERTY VERSION ${version})
-set_property(TARGET ${target} PROPERTY SOVERSION 0)
-set_property(TARGET ${target} PROPERTY
-  INTERFACE_${target}_MAJOR_VERSION 0)
-set_property(TARGET ${target} APPEND PROPERTY
-  COMPATIBLE_INTERFACE_STRING ${target}_MAJOR_VERSION
-)
-
-# generate the version file for the config file
-write_basic_package_version_file(
-  "${CMAKE_CURRENT_BINARY_DIR}/${target}ConfigVersion.cmake"
-  VERSION "${version}"
-  COMPATIBILITY AnyNewerVersion
-)
-
-# create config file
-configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/${target}Config.cmake.in
-  "${CMAKE_CURRENT_BINARY_DIR}/${target}Config.cmake"
-  INSTALL_DESTINATION lib/cmake/${target}
-)
-
-# install config files
-install(FILES
-  "${CMAKE_CURRENT_BINARY_DIR}/${target}Config.cmake"
-  "${CMAKE_CURRENT_BINARY_DIR}/${target}ConfigVersion.cmake"
-  DESTINATION lib/cmake/${target}
-)
-
-# generate the export targets for the build tree
-export(EXPORT ${target}Targets
-  FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/${target}Targets.cmake"
-  NAMESPACE ${target}::
-)
+target_install(${target} "0.0.1")
 
 find_package(Catch2 REQUIRED)
 find_package(ztest)
@@ -108,7 +71,7 @@ target_sources(${main}
 )
 target_link_libraries(${main} PUBLIC vector ztest::ztest)
 target_include_directories(${main} PRIVATE include)
-# target_compile_features(${main} PRIVATE cxx_std_20)
+target_compile_features(${main} PRIVATE cxx_std_20)
 # target_compile_options(${main} PRIVATE "$<$<CXX_COMPILER_ID:MSVC>:/std:c17;/experimental:module;>")
 
 set(test test)
