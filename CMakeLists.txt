@@ -31,7 +31,7 @@ set(target vector)
 
 include(GNUInstallDirs)
 
-install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lite" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/lite" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 
 target_include_directories(${target}
   INTERFACE
@@ -68,21 +68,21 @@ target_sources(${main}
     src/main.cpp
     src/main.cppm
     include/lite/vector.cppm
+    cmake/vectorConfig.cmake.in
 )
 target_link_libraries(${main} PUBLIC vector ztest::ztest)
 target_include_directories(${main} PRIVATE include)
 target_compile_features(${main} PRIVATE cxx_std_20)
-# target_compile_options(${main} PRIVATE "$<$<CXX_COMPILER_ID:MSVC>:/std:c17;/experimental:module;>")
 
-set(test test)
-if(Catch2_FOUND)
-  add_executable(${test})
-  target_sources(${test}
-    PRIVATE
-    src/test.cpp
-    include/lite/vector.hpp
-  )
-  target_link_libraries(${test}
-    PUBLIC Catch2::Catch2 vector)
-  target_compile_features(${test} PRIVATE cxx_std_17)
-endif()
+# set(test test)
+# if(Catch2_FOUND)
+#   add_executable(${test})
+#   target_sources(${test}
+#     PRIVATE
+#     src/test.cpp
+#     include/lite/vector.hpp
+#   )
+#   target_link_libraries(${test}
+#     PUBLIC Catch2::Catch2 vector)
+#   target_compile_features(${test} PRIVATE cxx_std_17)
+# endif()
