@@ -1,8 +1,8 @@
 #pragma once
 #ifndef CXX_VER
-#  if __cplusplus >= 202002L
+#  if __cplusplus >= 202002L && 0
 #    define CXX_VER 2020
-#  elif __cplusplus >= 201703L
+#  elif __cplusplus >= 201703L && 0
 #    define CXX_VER 2017
 #  elif __cplusplus >= 201103L
 #    define CXX_VER 2011
@@ -11,7 +11,7 @@
 #  endif
 #endif
 
-#if CXX_VER < 2020
+#if CXX_VER < 2020 || 1
 #  include <cstddef> // std::size_t std::ptrdiff_t
 #  include <climits> // ULLONG_MAX
 #  include <cassert> // std::assert
@@ -77,7 +77,11 @@
 #endif
 
 #ifndef NOEXCEPT
-#  define NOEXCEPT
+#  if CXX_VER >= 2011
+#    define NOEXCEPT noexcept
+#  else
+#    define NOEXCEPT
+#  endif
 #endif
 
 #ifndef CONSTEXPR
@@ -89,7 +93,11 @@
 #endif
 
 #ifndef NULLPTR
-#  define NULLPTR NULL
+#  if CXX_VER >= 2011
+#    define NULLPTR nullptr
+#  else
+#    define NULLPTR NULL
+#  endif
 #endif
 
 #ifndef CONSTEXPR_DYNAMIC_ALLOC
