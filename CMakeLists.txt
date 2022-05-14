@@ -4,6 +4,8 @@ cmake_minimum_required(VERSION 3.21)
 # 啟用IDE目錄功能
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+option(ENABLE_VECTOR_TEST "" OFF)
+
 # 包括模板
 include(CMakePrintHelpers)
 
@@ -61,28 +63,35 @@ if(NOT ztest_FOUND)
   add_library(ztest::ztest ALIAS ztest)
 endif()
 
-set(main main)
-add_executable(${main})
-target_sources(${main}
-  PRIVATE
-    src/main.cpp
-    src/main.cppm
-    include/lite/vector.cppm
-    cmake/vectorConfig.cmake.in
-)
-target_link_libraries(${main} PUBLIC vector ztest::ztest)
-target_include_directories(${main} PRIVATE include)
-target_compile_features(${main} PRIVATE cxx_std_20)
+if(ENABLE_VECTOR_TEST)
+  set(main main)
+  add_executable(${main})
+  target_sources(${main}
+    PRIVATE
+      src/main.cpp
+      src/main.cppm
+      include/lite/vector.cppm
+      include/lite/vector.hpp
+      include/lite/vector/common.h
+      cmake/vectorConfig.cmake.in
+  )
+  target_link_libraries(${main} PUBLIC vector ztest::ztest)
+  target_include_directories(${main} PRIVATE include)
+  target_compile_features(${main} PRIVATE cxx_std_20)
+endif()
 
-# set(test test)
-# if(Catch2_FOUND)
-#   add_executable(${test})
-#   target_sources(${test}
-#     PRIVATE
-#     src/test.cpp
-#     include/lite/vector.hpp
-#   )
-#   target_link_libraries(${test}
-#     PUBLIC Catch2::Catch2 vector)
-#   target_compile_features(${test} PRIVATE cxx_std_17)
-# endif()
+find_package(doctest REQUIRED)
+
+set(test test)
+add_executable(${test})
+target_sources(${test}
+  PRIVATE
+    src/test.cppm
+    src/test.cpp
+    include/lite/vector.hpp
+)
+target_link_libraries(${test}
+  PUBLIC doctest::doctest
+)
+target_include_directories(${test} PRIVATE include)
+target_compile_features(${test} PRIVATE cxx_std_20)

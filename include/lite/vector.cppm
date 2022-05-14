@@ -2,7 +2,7 @@ module;
 #ifndef CXX_VER
 #  define CXX_VER 2020
 #endif
-#include "common.h"
+#include "vector/common.h"
 export module lite.vector;
 import std.core;
 import <cstddef>; // std::size_t std::ptrdiff_t

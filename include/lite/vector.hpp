@@ -1,5 +1,5 @@
 #pragma once
-#include "common.h"
+#include "vector/common.h"
 
 namespace lite
 {
@@ -26,24 +26,18 @@ namespace lite
         typedef const value_type* const_reverse_iterator;
 
         CONSTEXPR vector() NOEXCEPT // 1
-            : m_data(NULLPTR)
-            , m_size(0)
-            , m_capacity(0)
         {
+            _init(0);
         }
 
         CONSTEXPR explicit vector(size_type count) // 4
-            : m_data(_create(count))
-            , m_size(count)
-            , m_capacity(count)
         {
+            _init(count);
         }
 
         CONSTEXPR vector(size_type count, const T& value) // 3
-            : m_data(_create(count))
-            , m_size(count)
-            , m_capacity(count)
         {
+            _init(count);
             std::fill_n(m_data, count, value);
         }
 
@@ -135,19 +129,22 @@ namespace lite
             return &front();
         }
 
+        /// @brief 返回指向 vector 末元素后一元素的迭代器。
+        /// @param （无）
+        /// @return 指向后随最后元素的迭代器。
         CONSTEXPR iterator end() NOEXCEPT
         {
-            return &back() + 1;
+            return _end();
         }
 
         CONSTEXPR const_iterator end() const NOEXCEPT
         {
-            return &back() + 1;
+            return _end();
         }
 
         CONSTEXPR const_iterator cend() const NOEXCEPT
         {
-            return &back() + 1;
+            return _end();
         }
 
         CONSTEXPR reverse_iterator rbegin() NOEXCEPT
@@ -248,20 +245,33 @@ namespace lite
             return begin() + offset;
         }
 
+        /// @brief 移除位于 pos 的元素。
+        /// @param pos 指向要移除的元素的迭代器
+        /// @return 后随最后移除元素的迭代器。
+        /// @retval end() 若 pos 指代末元素，则返回 end() 迭代器。
         CONSTEXPR iterator erase(const_iterator pos) //1
         {
+            if (pos == end())
+            {
+                return end();
+            }
             return erase(pos, pos + 1);
         }
 
         CONSTEXPR iterator erase(const_iterator first, const_iterator last) //2
         {
             assert(begin() <= first && first < end());
+            bool lastIsEnd = last == end();
             difference_type fst = first - begin();
             difference_type lst = last - begin();
             std::rotate(begin() + fst, begin() + lst, end());
             for (difference_type i = 0U; i < lst - fst; i++)
             {
                 pop_back();
+            }
+            if (lastIsEnd)
+            {
+                return end();
             }
             return begin() + fst;
         }
@@ -332,61 +342,114 @@ namespace lite
         }
 
     private:
-#if CXX_VER >= 2017
-        template<typename U>
-        U* _create(size_type count)
+        void _init(size_type count)
         {
-            if constexpr (std::is_class_v<U>)
+            if (count == 0)
             {
-                return reinterpret_cast<U*>(new char[count * sizeof(U)]);
+                m_data = NULLPTR;
             }
             else
             {
-                return new U[count];
+                _create(count, m_data);
             }
+            m_size = count;
+            m_capacity = count;
+        }
+
+        CONSTEXPR iterator _end() NOEXCEPT
+        {
+            if (empty())
+            {
+                return NULLPTR;
+            }
+            return &back() + 1;
+        }
+
+        CONSTEXPR const_iterator _end() const NOEXCEPT
+        {
+            if (empty())
+            {
+                return NULLPTR;
+            }
+            return &back() + 1;
         }
 
         template<typename U>
-        void _destory(U* data, size_t size)
-        {
-            if constexpr (std::is_class_v<U>)
-            {
-                for (size_t i = 0; i < size; i++)
-                {
-                    (data + i)->~U();
-                }
-            }
-            else
-            {
-                delete[] data;
-            }
-        }
-#elif HAS_TYPE_TRAITS
-        template<typename U>
-        ENABLE_IF_T(IS_CLASS_V(U), U)* _create(size_type count)
+        U* _create_class(size_type count)
         {
             return reinterpret_cast<U*>(new char[count * sizeof(U)]);
         }
 
         template<typename U>
-        ENABLE_IF_T(!IS_CLASS_V(U), U)* _create(size_type count)
+        U* _create_pod(size_type count)
         {
             return new U[count];
         }
 
         template<typename U>
-        void _destory(U* data, size_t size, ENABLE_IF_T(IS_CLASS_V(U), U)* = 0)
+        void _destory_class(size_type size, U* data)
         {
-            for (size_t i = 0; i < m_size; i++)
+            for (size_type i = 0; i < size; i++)
             {
-                (m_data + i)->~U();
+                (data + i)->~U();
             }
         }
 
         template<typename U>
-        void _destory(U* data, size_t size, ENABLE_IF_T(!IS_CLASS_V(U), U)* = 0)
+        void _destory_pod(U* data)
         {
-            delete[] m_data;
+            delete[] data;
+        }
+
+#if CXX_VER >= 2017
+        template<typename U>
+        void _create(size_type count, U*& data)
+        {
+            if constexpr (std::is_class_v<U>)
+            {
+                data = _create_class<U>(count);
+            }
+            else
+            {
+                data = _create_pod<U>(count);
+            }
+        }
+
+        template<typename U>
+        void _destory(size_type size, U* data)
+        {
+            if constexpr (std::is_class_v<U>)
+            {
+                _destory_class(size, data);
+            }
+            else
+            {
+                _destory_pod(data);
+            }
+        }
+#elif HAS_TYPE_TRAITS
+        template<typename U>
+        void _create(size_type count, U*& data, ENABLE_IF_T(IS_CLASS_V(U), U)* = NULLPTR)
+        {
+            data = _create_class<U>(count);
+        }
+
+        template<typename U>
+        void _create(size_type count, U*& data, ENABLE_IF_T(!IS_CLASS_V(U), U)* = NULLPTR)
+        {
+            data = _create_pod<U>(count);
+        }
+
+        template<typename U>
+        void _destory(size_type size, U* data, ENABLE_IF_T(IS_CLASS_V(U), U)* = NULLPTR)
+        {
+            _destory_class(size, data);
+        }
+
+        template<typename U>
+        void _destory(size_type, U* data, ENABLE_IF_T(!IS_CLASS_V(U), U)* = NULLPTR)
+        {
+            _destory_pod(data);
         }
 #else
         T* _create(size_type count)
@@ -394,7 +457,7 @@ namespace lite
             return new T[count];
         }
 
-        void _destory(T* data, size_t size)
+        void _destory(size_type, T* data)
         {
             delete[] m_data;
         }
@@ -410,13 +473,14 @@ namespace lite
 
         CONSTEXPR void _clear() NOEXCEPT
         {
-            _destory(m_data, m_size);
+            _destory(m_size, m_data);
             m_data = NULLPTR;
         }
 
         CONSTEXPR void _reserve(size_type new_cap)
         {
-            T* newData = _create<T>(new_cap);
+            T* newData = NULLPTR;
+            _create(new_cap, newData);
             copy_n(m_data, m_size, newData);
             _clear();
             m_data = newData;

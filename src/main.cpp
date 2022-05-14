@@ -7,6 +7,8 @@ import ztest;
 
 int main(int argc, char* argv[])
 {
+    argc;
+    argv;
     TEST_CASE("push_back", "lite::vector")
     {
         lite::vector<int> vec;
